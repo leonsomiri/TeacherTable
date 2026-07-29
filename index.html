@@ -36,9 +36,10 @@
     gap:6px;
     margin-bottom:14px;
   }
-  .brand svg{
-    width:64px;
-    height:64px;
+  .brand img{
+    width:72px;
+    height:72px;
+    object-fit:contain;
   }
   .brand .name{
     font-size:1.4rem;
@@ -58,6 +59,21 @@
     max-width:1100px;
     margin:0 auto;
     padding:0 16px 40px;
+  }
+  .toolbar{
+    display:flex;
+    justify-content:center;
+    margin-bottom:18px;
+  }
+  .toolbar select{
+    flex:0 1 260px;
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--card);
+    color:var(--text);
+    font-size:.95rem;
   }
   .stats{
     display:flex;
@@ -176,18 +192,17 @@
 <body>
 <header>
   <div class="brand">
-    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-label="Scope Ark logo">
-      <path d="M60 8 C36 8 20 30 20 55 L20 100 L40 100 L40 58 C40 42 48 28 60 28 C72 28 80 42 80 58 L80 100 L100 100 L100 55 C100 30 84 8 60 8 Z"
-            fill="none" stroke="#22402f" stroke-width="10" stroke-linejoin="round"/>
-      <path d="M60 30 C50 45 68 55 58 70 C50 82 60 92 60 100"
-            fill="none" stroke="#c9973f" stroke-width="9" stroke-linecap="round"/>
-    </svg>
+    <img src="assets/logo.png" alt="Scope Ark logo">
     <div class="name">SCOPE<span class="ark">ARK</span></div>
   </div>
   <h1>Lessons Schedule</h1>
 </header>
 
 <div class="container">
+  <div class="toolbar">
+    <select id="filterTeacher"><option value="">All Teachers</option></select>
+  </div>
+
   <div class="stats" id="stats"></div>
 
   <div class="cards" id="cards"></div>
@@ -288,6 +303,7 @@ async function loadData(isRefresh){
     }
     setLiveStatus(`Could not load live data (${err.message}) — showing cached data`);
   }
+  populateTeacherFilter();
   render();
 }
 
@@ -303,9 +319,30 @@ function badgeClass(status){
   return 'default';
 }
 
+const VISIBLE_STATUSES = ['scheduled', 'trail'];
+
+function populateTeacherFilter(){
+  const sel = document.getElementById('filterTeacher');
+  const prev = sel.value;
+  const teachers = [...new Set(allLessons
+    .filter(l=>VISIBLE_STATUSES.includes((l.Status||'').toLowerCase()))
+    .map(l=>l.Teacher_Name).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">All Teachers</option>';
+  teachers.forEach(t=>{
+    const o = document.createElement('option');
+    o.value = t; o.textContent = t;
+    sel.appendChild(o);
+  });
+  if(teachers.includes(prev)) sel.value = prev;
+}
+
 function render(){
-  const sorted = [...allLessons].sort((a,b)=>
-    (a.Teacher_Name||'').localeCompare(b.Teacher_Name||''));
+  const teacherFilter = document.getElementById('filterTeacher').value;
+
+  const sorted = allLessons
+    .filter(l=>VISIBLE_STATUSES.includes((l.Status||'').toLowerCase()))
+    .filter(l=>!teacherFilter || l.Teacher_Name === teacherFilter)
+    .sort((a,b)=>(a.Teacher_Name||'').localeCompare(b.Teacher_Name||''));
 
   const cards = document.getElementById('cards');
   const empty = document.getElementById('empty');
@@ -335,9 +372,11 @@ function render(){
   }
 
   document.getElementById('stats').innerHTML = `
-    <div class="stat"><b>${allLessons.length}</b>Total Lessons</div>
+    <div class="stat"><b>${sorted.length}</b>Lessons Shown</div>
   `;
 }
+
+document.getElementById('filterTeacher').addEventListener('change', render);
 
 loadData();
 </script>
