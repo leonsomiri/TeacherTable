@@ -368,9 +368,9 @@ function render(){
         </div>
         <div class="row"><span>Teacher</span><span>${l.Teacher_Name || '-'}</span></div>
         <div class="row"><span>Student</span><span>${l.Student_Name || '-'}</span></div>
-        <div class="row"><span>Day</span><span>${l.Day_Name || '-'} (${l.Actual_Date || '-'})</span></div>
+        <div class="row"><span>Day</span><span>${l.Teacher_Date || '-'}</span></div>
         <div class="row"><span>Time (Teacher)</span><span>${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})</span></div>
-        <div class="row"><span>Cairo Time</span><span>${l.CAIRO_TIME || '-'}</span></div>
+        <div class="row"><span>Admin Time</span><span>${l.CAIRO_TIME || '-'}</span></div>
         ${l.MEET_LINK ? `<a class="meet" href="https://${l.MEET_LINK}" target="_blank" rel="noopener">Join Lesson</a>` : ''}
       `;
       cards.appendChild(card);
