@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جدول الحصص - Lessons Schedule</title>
+<style>
+  :root{
+    --bg:#0f1420;
+    --card:#161d2e;
+    --border:#2a3348;
+    --text:#e6e9f2;
+    --muted:#9aa4bf;
+    --accent:#5b8cff;
+    --good:#2fbf71;
+    --warn:#f2b13a;
+    --bad:#e5484d;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f5f6fa;
+      --card:#ffffff;
+      --border:#e1e4ec;
+      --text:#1b1f2b;
+      --muted:#5b6478;
+      --accent:#3860d6;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI", Tahoma, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+  }
+  header{
+    padding:28px 20px 18px;
+    text-align:center;
+  }
+  header h1{
+    margin:0 0 6px;
+    font-size:1.6rem;
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:.95rem;
+  }
+  .container{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 16px 40px;
+  }
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .toolbar input, .toolbar select{
+    flex:1 1 160px;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--card);
+    color:var(--text);
+    font-size:.95rem;
+  }
+  .stats{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .stat{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px 16px;
+    font-size:.85rem;
+    color:var(--muted);
+  }
+  .stat b{
+    display:block;
+    color:var(--text);
+    font-size:1.15rem;
+  }
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(280px,1fr));
+    gap:14px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .card .top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .subject{
+    font-weight:700;
+    font-size:1.05rem;
+  }
+  .badge{
+    font-size:.75rem;
+    padding:4px 10px;
+    border-radius:999px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .badge.scheduled{background:rgba(59,130,246,.15); color:var(--accent);}
+  .badge.trail{background:rgba(242,177,58,.15); color:var(--warn);}
+  .badge.trail_done{background:rgba(47,191,113,.15); color:var(--good);}
+  .badge.rescheduled{background:rgba(229,72,77,.15); color:var(--bad);}
+  .badge.default{background:rgba(154,164,191,.15); color:var(--muted);}
+  .row{
+    display:flex;
+    justify-content:space-between;
+    font-size:.88rem;
+    color:var(--muted);
+  }
+  .row span:last-child{
+    color:var(--text);
+    font-weight:500;
+  }
+  .meet{
+    margin-top:6px;
+    text-align:center;
+    padding:8px;
+    border-radius:8px;
+    background:var(--accent);
+    color:#fff;
+    text-decoration:none;
+    font-size:.85rem;
+    font-weight:600;
+  }
+  .meet:hover{opacity:.9;}
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    padding:40px 0;
+  }
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:.8rem;
+    padding:20px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📅 جدول الحصص - Lessons Schedule</h1>
+  <p>بيانات مستخرجة من شيت Google Sheets · Sheet: Lessons_Schedule</p>
+</header>
+
+<div class="container">
+  <div class="stats" id="stats"></div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="ابحث عن طالب / معلم / رابط...">
+    <select id="filterSubject"><option value="">كل المواد</option></select>
+    <select id="filterDay"><option value="">كل الأيام</option></select>
+    <select id="filterStatus"><option value="">كل الحالات</option></select>
+  </div>
+
+  <div class="cards" id="cards"></div>
+  <div class="empty" id="empty" style="display:none">لا توجد حصص مطابقة</div>
+</div>
+
+<footer>TeacherTable · Lessons Schedule Viewer</footer>
+
+<script>
+let allLessons = [];
+
+async function loadData(){
+  const res = await fetch('data/lessons_schedule.json');
+  allLessons = await res.json();
+  populateFilters();
+  render();
+}
+
+function populateFilters(){
+  const subjects = [...new Set(allLessons.map(l=>l.Subject).filter(Boolean))].sort();
+  const days = [...new Set(allLessons.map(l=>l.Day_Name).filter(Boolean))];
+  const statuses = [...new Set(allLessons.map(l=>l.Status).filter(Boolean))].sort();
+
+  const subjSel = document.getElementById('filterSubject');
+  subjects.forEach(s=>{
+    const o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    subjSel.appendChild(o);
+  });
+
+  const dayOrder = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  const daySel = document.getElementById('filterDay');
+  days.sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b)).forEach(d=>{
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d;
+    daySel.appendChild(o);
+  });
+
+  const statSel = document.getElementById('filterStatus');
+  statuses.forEach(s=>{
+    const o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    statSel.appendChild(o);
+  });
+}
+
+function badgeClass(status){
+  if(!status) return 'default';
+  const s = status.toLowerCase();
+  if(s === 'scheduled') return 'scheduled';
+  if(s === 'trail') return 'trail';
+  if(s === 'trail_done') return 'trail_done';
+  if(s === 'rescheduled') return 'rescheduled';
+  return 'default';
+}
+
+function render(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const subject = document.getElementById('filterSubject').value;
+  const day = document.getElementById('filterDay').value;
+  const status = document.getElementById('filterStatus').value;
+
+  const filtered = allLessons.filter(l=>{
+    if(subject && l.Subject !== subject) return false;
+    if(day && l.Day_Name !== day) return false;
+    if(status && l.Status !== status) return false;
+    if(q){
+      const hay = `${l.Student_Name} ${l.Teacher_Name} ${l.MEET_LINK}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const cards = document.getElementById('cards');
+  const empty = document.getElementById('empty');
+  cards.innerHTML = '';
+
+  if(filtered.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    filtered.forEach(l=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="top">
+          <span class="subject">${l.Subject || '-'}</span>
+          <span class="badge ${badgeClass(l.Status)}">${l.Status || '-'}</span>
+        </div>
+        <div class="row"><span>الطالب</span><span>${l.Student_Name || '-'}</span></div>
+        <div class="row"><span>المعلم</span><span>${l.Teacher_Name || '-'}</span></div>
+        <div class="row"><span>اليوم</span><span>${l.Day_Name || '-'} (${l.Actual_Date || '-'})</span></div>
+        <div class="row"><span>وقت الطالب</span><span>${l.Start_Time_Student || '-'} - ${l.End_Time_Student || '-'} (${l.Student_TimeZone || '-'})</span></div>
+        <div class="row"><span>وقت المعلم</span><span>${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})</span></div>
+        <div class="row"><span>توقيت القاهرة</span><span>${l.CAIRO_TIME || '-'}</span></div>
+        ${l.MEET_LINK ? `<a class="meet" href="https://${l.MEET_LINK}" target="_blank" rel="noopener">🔗 رابط الحصة</a>` : ''}
+      `;
+      cards.appendChild(card);
+    });
+  }
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><b>${allLessons.length}</b>إجمالي الحصص</div>
+    <div class="stat"><b>${filtered.length}</b>الحصص المعروضة</div>
+  `;
+}
+
+['search','filterSubject','filterDay','filterStatus'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', render);
+  document.getElementById(id).addEventListener('change', render);
+});
+
+loadData();
+</script>
+</body>
+</html>
