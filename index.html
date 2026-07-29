@@ -6,6 +6,7 @@
 <title>Lessons Schedule - Scope Ark</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="m-0 min-h-screen bg-slate-50 text-slate-800 font-sans">
 <header class="px-5 pt-8 pb-5 text-center">
@@ -16,8 +17,19 @@
   <h1 class="m-0 text-3xl font-bold text-slate-900">Teacher Lessons Schedule</h1>
 </header>
 
-<div class="max-w-5xl mx-auto px-4 pb-10">
-  <div class="flex justify-center mb-4">
+<div id="authGate" class="max-w-sm mx-auto px-4 py-10 text-center">
+  <p class="text-slate-600 mb-4">Sign in with your Google account to view your schedule.</p>
+  <div id="googleSignInBtn" class="flex justify-center"></div>
+  <p id="authError" class="text-rose-600 text-sm mt-4 hidden"></p>
+</div>
+
+<div id="appContent" class="max-w-5xl mx-auto px-4 pb-10 hidden">
+  <div class="flex justify-between items-center mb-4 text-sm">
+    <span id="viewerInfo" class="text-slate-500"></span>
+    <button id="signOutBtn" class="text-indigo-600 font-semibold hover:underline">Sign out</button>
+  </div>
+
+  <div id="teacherFilterWrap" class="flex justify-center mb-4 hidden">
     <select id="filterTeacher" class="w-full max-w-xs px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-800 text-sm">
       <option value="">All Teachers</option>
     </select>
@@ -32,103 +44,112 @@
 <footer class="text-center text-slate-500 text-sm px-5 pt-6 pb-8 border-t border-slate-200 mt-5">
   <div class="text-slate-900 font-bold mb-1">Scope Ark Online Academy</div>
   <a href="https://www.scopeark.com" target="_blank" rel="noopener" class="text-indigo-600 font-semibold hover:underline">www.scopeark.com</a>
-  <span id="liveStatus" class="block mt-2 text-xs">Loading...</span>
+  <span id="liveStatus" class="block mt-2 text-xs">&nbsp;</span>
   <div class="mt-3 text-xs text-slate-500">Corporate website: scopeark.net. &copy; 2026 Scope Ark. All rights reserved.</div>
 </footer>
 
 <script>
-// Live public "view-only" copy of the Lessons_Schedule sheet (kept in sync via
-// an IMPORTRANGE formula in the source spreadsheet). This is a *separate*
-// spreadsheet containing only this one tab, so no other sensitive tabs are
-// exposed publicly.
-const LIVE_SHEET_ID = '1NWhEULW5C6WBMvBEiErt7wy1oywMvFWDVhxcLptxaLo';
-const LIVE_CSV_URL = `https://docs.google.com/spreadsheets/d/${LIVE_SHEET_ID}/gviz/tq?tqx=out:csv`;
+const GOOGLE_CLIENT_ID = '644310616310-0h05cdaudvv6fjppjh62l9c8uton058o.apps.googleusercontent.com';
 const REFRESH_MS = 60000; // refresh every 60 seconds
+const VISIBLE_STATUSES = ['scheduled', 'trail', 'rescheduled'];
 
-const FIELDS = ['Lesson_ID','Student_ID','Student_Name','Student_TimeZone','Teacher_ID',
-  'Teacher_Name','Teacher_TimeZone','Subject','Stage','Day_Name','Actual_Date','Month','Year',
-  'Student_Date','Teacher_Date','Day_Index','Start_Time_Student','End_Time_Student',
-  'Start_Time_Teacher','End_Time_Teacher','CAIRO_TIME','MEET_LINK','Status','Reason','Note',
-  'Added_By','Comment','T_MSG','T_WTS','STD_MSG','STD_WTS'];
-
+let idToken = null;
 let allLessons = [];
-
-function parseCSV(text){
-  const rows = [];
-  let row = [], field = '', inQuotes = false;
-  for(let i=0;i<text.length;i++){
-    const c = text[i];
-    if(inQuotes){
-      if(c === '"'){
-        if(text[i+1] === '"'){ field += '"'; i++; }
-        else inQuotes = false;
-      } else field += c;
-    } else {
-      if(c === '"') inQuotes = true;
-      else if(c === ','){ row.push(field); field = ''; }
-      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
-      else if(c === '\r'){ /* skip */ }
-      else field += c;
-    }
-  }
-  if(field.length || row.length){ row.push(field); rows.push(row); }
-  return rows;
-}
-
-function csvToLessons(text){
-  const rows = parseCSV(text).filter(r=>r.some(c=>c !== ''));
-  if(rows.length < 2) return [];
-  const header = rows[0];
-  const idx = {};
-  header.forEach((h,i)=>idx[h.trim()] = i);
-  const out = [];
-  for(let r=1;r<rows.length;r++){
-    const row = rows[r];
-    const lessonIdCell = idx['Lesson_ID'] !== undefined ? row[idx['Lesson_ID']] : '';
-    if(!lessonIdCell) continue;
-    const item = {};
-    FIELDS.forEach(f=>{
-      item[f] = idx[f] !== undefined ? (row[idx[f]] || '') : '';
-    });
-    out.push(item);
-  }
-  return out;
-}
+let isAdmin = false;
 
 function setLiveStatus(msg){
   document.getElementById('liveStatus').textContent = msg;
 }
 
-async function fetchLive(){
-  const res = await fetch(`${LIVE_CSV_URL}&_=${Date.now()}`, {cache:'no-store'});
-  if(!res.ok) throw new Error('HTTP ' + res.status);
-  const text = await res.text();
-  if(text.includes('#REF!') || text.includes('#ERROR!')){
-    throw new Error('live sheet not linked yet');
-  }
-  return csvToLessons(text);
+function showAuthError(msg){
+  const el = document.getElementById('authError');
+  el.textContent = msg;
+  el.classList.remove('hidden');
 }
 
+function hideAuthError(){
+  document.getElementById('authError').classList.add('hidden');
+}
+
+function onCredentialResponse(response){
+  idToken = response.credential;
+  hideAuthError();
+  document.getElementById('authGate').classList.add('hidden');
+  document.getElementById('appContent').classList.remove('hidden');
+  loadData();
+}
+
+function signOut(){
+  idToken = null;
+  allLessons = [];
+  if(window.google) google.accounts.id.disableAutoSelect();
+  document.getElementById('appContent').classList.add('hidden');
+  document.getElementById('authGate').classList.remove('hidden');
+}
+
+document.getElementById('signOutBtn').addEventListener('click', signOut);
+
+function initGoogleSignIn(attemptsLeft){
+  if(window.google && google.accounts && google.accounts.id){
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: onCredentialResponse,
+    });
+    google.accounts.id.renderButton(document.getElementById('googleSignInBtn'), {
+      theme: 'outline', size: 'large', text: 'signin_with',
+    });
+    return;
+  }
+  if(attemptsLeft <= 0){
+    showAuthError('Could not load Google Sign-In. Check your connection and reload the page.');
+    return;
+  }
+  setTimeout(()=>initGoogleSignIn(attemptsLeft - 1), 300);
+}
+
+window.addEventListener('load', function(){ initGoogleSignIn(20); });
+
 async function loadData(isRefresh){
+  if(!idToken) return;
   try{
-    allLessons = await fetchLive();
+    const res = await fetch('/api/schedule', {
+      headers: { Authorization: 'Bearer ' + idToken },
+      cache: 'no-store',
+    });
+
+    if(res.status === 401){
+      setLiveStatus('Session expired.');
+      signOut();
+      showAuthError('Your session expired. Please sign in again.');
+      return;
+    }
+    if(res.status === 403){
+      const data = await res.json().catch(()=>({}));
+      signOut();
+      showAuthError(data.error || 'No schedule found for this Google account.');
+      return;
+    }
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+
+    const data = await res.json();
+    allLessons = data.lessons || [];
+    isAdmin = Boolean(data.isAdmin);
+
+    document.getElementById('teacherFilterWrap').classList.toggle('hidden', !isAdmin);
+    document.getElementById('viewerInfo').textContent = isAdmin
+      ? `Signed in as ${data.viewerName || 'Admin'} (viewing all teachers)`
+      : `Signed in as ${data.viewerName || ''}`;
+
     const now = new Date().toLocaleTimeString('en-US');
     setLiveStatus(`Live data · last updated: ${now} · refreshes every ${REFRESH_MS/1000}s`);
   } catch(err){
-    if(!isRefresh){
-      // first load fallback to bundled snapshot so the page isn't empty
-      try{
-        const res = await fetch('data/lessons_schedule.json');
-        allLessons = await res.json();
-      } catch(e){ allLessons = []; }
-    }
-    setLiveStatus(`Could not load live data (${err.message}) — showing cached data`);
+    setLiveStatus(`Could not load data (${err.message})`);
   }
   populateTeacherFilter();
   render();
 }
 
-setInterval(()=>loadData(true), REFRESH_MS);
+setInterval(()=>{ if(idToken) loadData(true); }, REFRESH_MS);
 
 function dayNameFromDate(dateStr){
   if(!dateStr) return '';
@@ -168,8 +189,6 @@ function badgeClasses(status){
   return 'bg-slate-100 text-slate-500';
 }
 
-const VISIBLE_STATUSES = ['scheduled', 'trail', 'rescheduled'];
-
 function statusLabel(status){
   if(!status) return '-';
   if(status.toLowerCase() === 'trail') return 'Trial';
@@ -179,9 +198,7 @@ function statusLabel(status){
 function populateTeacherFilter(){
   const sel = document.getElementById('filterTeacher');
   const prev = sel.value;
-  const teachers = [...new Set(allLessons
-    .filter(l=>VISIBLE_STATUSES.includes((l.Status||'').toLowerCase()))
-    .map(l=>l.Teacher_Name).filter(Boolean))].sort();
+  const teachers = [...new Set(allLessons.map(l=>l.Teacher_Name).filter(Boolean))].sort();
   sel.innerHTML = '<option value="">All Teachers</option>';
   teachers.forEach(t=>{
     const o = document.createElement('option');
@@ -204,7 +221,7 @@ function render(){
 
   const sorted = allLessons
     .filter(l=>VISIBLE_STATUSES.includes((l.Status||'').toLowerCase()))
-    .filter(l=>!teacherFilter || l.Teacher_Name === teacherFilter)
+    .filter(l=>!isAdmin || !teacherFilter || l.Teacher_Name === teacherFilter)
     .sort((a,b)=>adminTimeSortKey(a.CAIRO_TIME) - adminTimeSortKey(b.CAIRO_TIME));
 
   const cards = document.getElementById('cards');
@@ -248,8 +265,6 @@ function render(){
 }
 
 document.getElementById('filterTeacher').addEventListener('change', render);
-
-loadData();
 </script>
 </body>
 </html>
