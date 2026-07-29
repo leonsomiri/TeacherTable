@@ -142,6 +142,23 @@ function dayNameFromDate(dateStr){
   return dt.toLocaleDateString('en-US', {weekday: 'long', timeZone: 'UTC'});
 }
 
+function adminTimeSortKey(str){
+  if(!str) return Infinity;
+  const dateMatch = str.match(/(\d{4})-(\d{1,2})-(\d{1,2})/) || str.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(!dateMatch) return Infinity;
+  let y, m, d;
+  if(dateMatch[0].indexOf('-') > -1 && dateMatch[1].length === 4){
+    y = +dateMatch[1]; m = +dateMatch[2]; d = +dateMatch[3];
+  } else {
+    m = +dateMatch[1]; d = +dateMatch[2]; y = +dateMatch[3];
+  }
+  const timeMatch = str.match(/(\d{1,2}):(\d{2})(:(\d{2}))?/);
+  const hh = timeMatch ? +timeMatch[1] : 0;
+  const mm = timeMatch ? +timeMatch[2] : 0;
+  const ss = timeMatch && timeMatch[4] ? +timeMatch[4] : 0;
+  return Date.UTC(y, m - 1, d, hh, mm, ss);
+}
+
 function badgeClasses(status){
   const s = (status || '').toLowerCase();
   if(s === 'scheduled') return 'bg-indigo-50 text-indigo-700';
@@ -188,7 +205,7 @@ function render(){
   const sorted = allLessons
     .filter(l=>VISIBLE_STATUSES.includes((l.Status||'').toLowerCase()))
     .filter(l=>!teacherFilter || l.Teacher_Name === teacherFilter)
-    .sort((a,b)=>(a.Teacher_Name||'').localeCompare(b.Teacher_Name||''));
+    .sort((a,b)=>adminTimeSortKey(a.CAIRO_TIME) - adminTimeSortKey(b.CAIRO_TIME));
 
   const cards = document.getElementById('cards');
   const empty = document.getElementById('empty');
