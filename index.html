@@ -176,44 +176,126 @@
   <div class="empty" id="empty" style="display:none">لا توجد حصص مطابقة</div>
 </div>
 
-<footer>TeacherTable · Lessons Schedule Viewer</footer>
+<footer>
+  <span id="liveStatus">جاري التحميل...</span>
+</footer>
 
 <script>
+// Live public "view-only" copy of the Lessons_Schedule sheet (kept in sync via
+// an IMPORTRANGE formula in the source spreadsheet). This is a *separate*
+// spreadsheet containing only this one tab, so no other sensitive tabs are
+// exposed publicly.
+const LIVE_SHEET_ID = '1NWhEULW5C6WBMvBEiErt7wy1oywMvFWDVhxcLptxaLo';
+const LIVE_CSV_URL = `https://docs.google.com/spreadsheets/d/${LIVE_SHEET_ID}/gviz/tq?tqx=out:csv`;
+const REFRESH_MS = 60000; // refresh every 60 seconds
+
+const FIELDS = ['Lesson_ID','Student_ID','Student_Name','Student_TimeZone','Teacher_ID',
+  'Teacher_Name','Teacher_TimeZone','Subject','Stage','Day_Name','Actual_Date','Month','Year',
+  'Student_Date','Teacher_Date','Day_Index','Start_Time_Student','End_Time_Student',
+  'Start_Time_Teacher','End_Time_Teacher','CAIRO_TIME','MEET_LINK','Status','Reason','Note',
+  'Added_By','Comment','T_MSG','T_WTS','STD_MSG','STD_WTS'];
+
 let allLessons = [];
 
-async function loadData(){
-  const res = await fetch('data/lessons_schedule.json');
-  allLessons = await res.json();
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else if(c === '\r'){ /* skip */ }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+function csvToLessons(text){
+  const rows = parseCSV(text).filter(r=>r.some(c=>c !== ''));
+  if(rows.length < 2) return [];
+  const header = rows[0];
+  const idx = {};
+  header.forEach((h,i)=>idx[h.trim()] = i);
+  const out = [];
+  for(let r=1;r<rows.length;r++){
+    const row = rows[r];
+    const lessonIdCell = idx['Lesson_ID'] !== undefined ? row[idx['Lesson_ID']] : '';
+    if(!lessonIdCell) continue;
+    const item = {};
+    FIELDS.forEach(f=>{
+      item[f] = idx[f] !== undefined ? (row[idx[f]] || '') : '';
+    });
+    out.push(item);
+  }
+  return out;
+}
+
+function setLiveStatus(msg){
+  document.getElementById('liveStatus').textContent = msg;
+}
+
+async function fetchLive(){
+  const res = await fetch(`${LIVE_CSV_URL}&_=${Date.now()}`, {cache:'no-store'});
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  if(text.includes('#REF!') || text.includes('#ERROR!')){
+    throw new Error('الشيت العام لسه محتاج تفعيل IMPORTRANGE أو المشاركة');
+  }
+  return csvToLessons(text);
+}
+
+async function loadData(isRefresh){
+  try{
+    allLessons = await fetchLive();
+    const now = new Date().toLocaleTimeString('ar-EG');
+    setLiveStatus(`🟢 بيانات حية · آخر تحديث: ${now} · يتم التحديث كل ${REFRESH_MS/1000} ثانية`);
+  } catch(err){
+    if(!isRefresh){
+      // first load fallback to bundled snapshot so the page isn't empty
+      try{
+        const res = await fetch('data/lessons_schedule.json');
+        allLessons = await res.json();
+      } catch(e){ allLessons = []; }
+    }
+    setLiveStatus(`🟡 تعذر جلب البيانات الحية (${err.message}) — تعرض بيانات مخزّنة`);
+  }
   populateFilters();
   render();
 }
+
+setInterval(()=>loadData(true), REFRESH_MS);
 
 function populateFilters(){
   const subjects = [...new Set(allLessons.map(l=>l.Subject).filter(Boolean))].sort();
   const days = [...new Set(allLessons.map(l=>l.Day_Name).filter(Boolean))];
   const statuses = [...new Set(allLessons.map(l=>l.Status).filter(Boolean))].sort();
-
-  const subjSel = document.getElementById('filterSubject');
-  subjects.forEach(s=>{
-    const o = document.createElement('option');
-    o.value = s; o.textContent = s;
-    subjSel.appendChild(o);
-  });
-
   const dayOrder = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
-  const daySel = document.getElementById('filterDay');
-  days.sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b)).forEach(d=>{
-    const o = document.createElement('option');
-    o.value = d; o.textContent = d;
-    daySel.appendChild(o);
-  });
+  days.sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
 
-  const statSel = document.getElementById('filterStatus');
-  statuses.forEach(s=>{
+  fillSelect('filterSubject', subjects, 'كل المواد');
+  fillSelect('filterDay', days, 'كل الأيام');
+  fillSelect('filterStatus', statuses, 'كل الحالات');
+}
+
+function fillSelect(id, values, allLabel){
+  const sel = document.getElementById(id);
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">${allLabel}</option>`;
+  values.forEach(v=>{
     const o = document.createElement('option');
-    o.value = s; o.textContent = s;
-    statSel.appendChild(o);
+    o.value = v; o.textContent = v;
+    sel.appendChild(o);
   });
+  if(values.includes(prev)) sel.value = prev;
 }
 
 function badgeClass(status){
