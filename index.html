@@ -223,7 +223,7 @@ function render(){
       const day = `${l.Teacher_Date || '-'}${dayNameFromDate(l.Teacher_Date) ? ' (' + dayNameFromDate(l.Teacher_Date) + ')' : ''}`;
       const time = `${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})`;
       card.innerHTML = `
-        <div class="flex items-center gap-2 text-lg font-bold text-scopegreen border-b border-scopeborder pb-2">
+        <div class="flex items-center gap-2 -mx-4 -mt-4 mb-1 px-4 py-2.5 rounded-t-2xl text-white font-bold text-lg bg-gradient-to-b from-teal-500 to-teal-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2)]">
           <i data-lucide="user" class="w-4 h-4"></i>${l.Teacher_Name || '-'}
         </div>
         <div class="flex justify-between items-center">
