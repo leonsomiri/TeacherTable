@@ -5,39 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lessons Schedule - Scope Ark</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          scopebg: '#faf3e8',
-          scopecard: '#fffdf8',
-          scopeborder: '#e6dcc8',
-          scopetext: '#243b30',
-          scopemuted: '#7a7563',
-          scopegreen: '#22402f',
-          scopegold: '#c9973f',
-          scopegood: '#2f8f5f',
-          scopebad: '#c0453f',
-        }
-      }
-    }
-  }
-</script>
 <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="m-0 min-h-screen bg-scopebg text-scopetext font-sans">
+<body class="m-0 min-h-screen bg-slate-50 text-slate-800 font-sans">
 <header class="px-5 pt-8 pb-5 text-center">
   <div class="flex flex-col items-center gap-1.5 mb-3.5">
     <img src="assets/logo.png" alt="Scope Ark logo" width="40" height="40" class="w-10 h-10 object-contain">
-    <div class="text-2xl font-bold tracking-wide text-scopegreen">SCOPE<span class="text-scopegold">ARK</span></div>
+    <div class="text-2xl font-bold tracking-wide text-slate-900">SCOPE<span class="text-indigo-600">ARK</span></div>
   </div>
-  <h1 class="m-0 text-3xl font-bold text-scopegreen">Teacher Lessons Schedule</h1>
+  <h1 class="m-0 text-3xl font-bold text-slate-900">Teacher Lessons Schedule</h1>
 </header>
 
 <div class="max-w-5xl mx-auto px-4 pb-10">
   <div class="flex justify-center mb-4">
-    <select id="filterTeacher" class="w-full max-w-xs px-3 py-2.5 rounded-lg border border-scopeborder bg-scopecard text-scopetext text-sm">
+    <select id="filterTeacher" class="w-full max-w-xs px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-800 text-sm">
       <option value="">All Teachers</option>
     </select>
   </div>
@@ -45,14 +26,14 @@
   <div id="stats" class="flex gap-2.5 flex-wrap justify-center mb-4"></div>
 
   <div id="cards" class="grid gap-3.5" style="grid-template-columns:repeat(auto-fill, minmax(280px,1fr))"></div>
-  <div id="empty" class="text-center text-scopemuted py-10 hidden">No lessons found</div>
+  <div id="empty" class="text-center text-slate-500 py-10 hidden">No lessons found</div>
 </div>
 
-<footer class="text-center text-scopemuted text-sm px-5 pt-6 pb-8 border-t border-scopeborder mt-5">
-  <div class="text-scopegreen font-bold mb-1">Scope Ark Online Academy</div>
-  <a href="https://www.scopeark.com" target="_blank" rel="noopener" class="text-scopegold font-semibold hover:underline">www.scopeark.com</a>
+<footer class="text-center text-slate-500 text-sm px-5 pt-6 pb-8 border-t border-slate-200 mt-5">
+  <div class="text-slate-900 font-bold mb-1">Scope Ark Online Academy</div>
+  <a href="https://www.scopeark.com" target="_blank" rel="noopener" class="text-indigo-600 font-semibold hover:underline">www.scopeark.com</a>
   <span id="liveStatus" class="block mt-2 text-xs">Loading...</span>
-  <div class="mt-3 text-xs text-scopemuted">Corporate website: scopeark.net. &copy; 2026 Scope Ark. All rights reserved.</div>
+  <div class="mt-3 text-xs text-slate-500">Corporate website: scopeark.net. &copy; 2026 Scope Ark. All rights reserved.</div>
 </footer>
 
 <script>
@@ -163,11 +144,11 @@ function dayNameFromDate(dateStr){
 
 function badgeClasses(status){
   const s = (status || '').toLowerCase();
-  if(s === 'scheduled') return 'bg-scopegreen/10 text-scopegreen';
-  if(s === 'trail') return 'bg-scopegold/20 text-scopegold';
-  if(s === 'trail_done') return 'bg-scopegood/15 text-scopegood';
-  if(s === 'rescheduled') return 'bg-scopebad/15 text-scopebad';
-  return 'bg-scopemuted/10 text-scopemuted';
+  if(s === 'scheduled') return 'bg-indigo-50 text-indigo-700';
+  if(s === 'trail') return 'bg-amber-50 text-amber-700';
+  if(s === 'trail_done') return 'bg-emerald-50 text-emerald-700';
+  if(s === 'rescheduled') return 'bg-rose-50 text-rose-700';
+  return 'bg-slate-100 text-slate-500';
 }
 
 const VISIBLE_STATUSES = ['scheduled', 'trail', 'rescheduled'];
@@ -195,9 +176,9 @@ function populateTeacherFilter(){
 
 function row(icon, label, value){
   return `
-    <div class="flex justify-between items-start text-sm text-scopemuted gap-2">
+    <div class="flex justify-between items-start text-sm text-slate-500 gap-2">
       <span class="flex items-center gap-1.5 shrink-0"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i>${label}</span>
-      <span class="text-scopetext font-medium text-right">${value}</span>
+      <span class="text-slate-800 font-medium text-right">${value}</span>
     </div>`;
 }
 
@@ -219,30 +200,30 @@ function render(){
     empty.classList.add('hidden');
     sorted.forEach(l=>{
       const card = document.createElement('div');
-      card.className = 'bg-scopecard border border-scopeborder rounded-2xl p-4 flex flex-col gap-2 shadow-sm';
+      card.className = 'bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-2 shadow-sm';
       const day = `${l.Teacher_Date || '-'}${dayNameFromDate(l.Teacher_Date) ? ' (' + dayNameFromDate(l.Teacher_Date) + ')' : ''}`;
       const time = `${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})`;
       card.innerHTML = `
-        <div class="flex items-center gap-2 -mx-4 -mt-4 mb-1 px-4 py-2.5 rounded-t-2xl text-white font-bold text-lg bg-gradient-to-b from-teal-500 to-teal-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2)]">
+        <div class="flex items-center gap-2 -mx-4 -mt-4 mb-1 px-4 py-2.5 rounded-t-2xl text-white font-bold text-lg bg-gradient-to-b from-indigo-600 to-indigo-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2)]">
           <i data-lucide="user" class="w-4 h-4"></i>${l.Teacher_Name || '-'}
         </div>
         <div class="flex justify-between items-center">
-          <span class="flex items-center gap-1.5 font-semibold text-sm text-scopegold"><i data-lucide="book-open" class="w-3.5 h-3.5"></i>${l.Subject || '-'}</span>
+          <span class="flex items-center gap-1.5 font-semibold text-sm text-indigo-600"><i data-lucide="book-open" class="w-3.5 h-3.5"></i>${l.Subject || '-'}</span>
           <span class="text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ${badgeClasses(l.Status)}">${statusLabel(l.Status)}</span>
         </div>
         ${row('graduation-cap', 'Student', l.Student_Name || '-')}
         ${row('calendar', 'Day', day)}
         ${row('clock', 'Time (Teacher)', time)}
         ${row('building-2', 'Admin Time', l.CAIRO_TIME || '-')}
-        ${l.MEET_LINK ? `<a class="mt-1.5 flex items-center justify-center gap-1.5 text-center py-2 rounded-lg bg-scopegreen text-white no-underline text-sm font-semibold hover:opacity-90" href="https://${l.MEET_LINK}" target="_blank" rel="noopener"><i data-lucide="video" class="w-4 h-4"></i>Join Lesson</a>` : ''}
+        ${l.MEET_LINK ? `<a class="mt-1.5 flex items-center justify-center gap-1.5 text-center py-2 rounded-lg bg-slate-900 text-white no-underline text-sm font-semibold hover:opacity-90" href="https://${l.MEET_LINK}" target="_blank" rel="noopener"><i data-lucide="video" class="w-4 h-4"></i>Join Lesson</a>` : ''}
       `;
       cards.appendChild(card);
     });
   }
 
   document.getElementById('stats').innerHTML = `
-    <div class="bg-scopecard border border-scopeborder rounded-xl px-4 py-2.5 text-sm text-scopemuted text-center">
-      <b class="block text-scopegreen text-lg">${sorted.length}</b>Lessons Shown
+    <div class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-500 text-center">
+      <b class="block text-slate-900 text-lg">${sorted.length}</b>Lessons Shown
     </div>
   `;
 
