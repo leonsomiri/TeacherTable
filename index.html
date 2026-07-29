@@ -4,228 +4,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lessons Schedule - Scope Ark</title>
-<style>
-  :root{
-    --bg:#faf3e8;
-    --card:#fffdf8;
-    --border:#e6dcc8;
-    --text:#243b30;
-    --muted:#7a7563;
-    --green:#22402f;
-    --gold:#c9973f;
-    --good:#2f8f5f;
-    --warn:#c9973f;
-    --bad:#c0453f;
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          scopebg: '#faf3e8',
+          scopecard: '#fffdf8',
+          scopeborder: '#e6dcc8',
+          scopetext: '#243b30',
+          scopemuted: '#7a7563',
+          scopegreen: '#22402f',
+          scopegold: '#c9973f',
+          scopegood: '#2f8f5f',
+          scopebad: '#c0453f',
+        }
+      }
+    }
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    font-family:"Segoe UI", Tahoma, Arial, sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    min-height:100vh;
-  }
-  header{
-    padding:32px 20px 20px;
-    text-align:center;
-  }
-  .brand{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:6px;
-    margin-bottom:14px;
-  }
-  .brand img{
-    width:72px;
-    height:72px;
-    object-fit:contain;
-  }
-  .brand .name{
-    font-size:1.4rem;
-    font-weight:700;
-    color:var(--green);
-    letter-spacing:.5px;
-  }
-  .brand .name .ark{
-    color:var(--gold);
-  }
-  header h1{
-    margin:0;
-    font-size:1.8rem;
-    color:var(--green);
-  }
-  .container{
-    max-width:1100px;
-    margin:0 auto;
-    padding:0 16px 40px;
-  }
-  .toolbar{
-    display:flex;
-    justify-content:center;
-    margin-bottom:18px;
-  }
-  .toolbar select{
-    flex:0 1 260px;
-    width:100%;
-    padding:10px 12px;
-    border-radius:10px;
-    border:1px solid var(--border);
-    background:var(--card);
-    color:var(--text);
-    font-size:.95rem;
-  }
-  .stats{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom:18px;
-    justify-content:center;
-  }
-  .stat{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:10px 18px;
-    font-size:.85rem;
-    color:var(--muted);
-    text-align:center;
-  }
-  .stat b{
-    display:block;
-    color:var(--green);
-    font-size:1.15rem;
-  }
-  .cards{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(280px,1fr));
-    gap:14px;
-  }
-  .card{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:16px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    box-shadow:0 1px 3px rgba(34,64,47,.06);
-  }
-  .card .top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-  }
-  .teacher-name{
-    font-weight:700;
-    font-size:1.15rem;
-    color:var(--green);
-    border-bottom:1px solid var(--border);
-    padding-bottom:8px;
-  }
-  .subject{
-    font-weight:600;
-    font-size:.95rem;
-    color:var(--gold);
-  }
-  .badge{
-    font-size:.75rem;
-    padding:4px 10px;
-    border-radius:999px;
-    font-weight:600;
-    white-space:nowrap;
-  }
-  .badge.scheduled{background:rgba(34,64,47,.1); color:var(--green);}
-  .badge.trail{background:rgba(201,151,63,.18); color:var(--warn);}
-  .badge.trail_done{background:rgba(47,143,95,.15); color:var(--good);}
-  .badge.rescheduled{background:rgba(192,69,63,.15); color:var(--bad);}
-  .badge.default{background:rgba(122,117,99,.12); color:var(--muted);}
-  .row{
-    display:flex;
-    justify-content:space-between;
-    font-size:.88rem;
-    color:var(--muted);
-  }
-  .row span:last-child{
-    color:var(--text);
-    font-weight:500;
-    text-align:right;
-  }
-  .meet{
-    margin-top:6px;
-    text-align:center;
-    padding:8px;
-    border-radius:8px;
-    background:var(--green);
-    color:#fff;
-    text-decoration:none;
-    font-size:.85rem;
-    font-weight:600;
-  }
-  .meet:hover{opacity:.9;}
-  .empty{
-    text-align:center;
-    color:var(--muted);
-    padding:40px 0;
-  }
-  footer{
-    text-align:center;
-    color:var(--muted);
-    font-size:.85rem;
-    padding:24px 20px 30px;
-    border-top:1px solid var(--border);
-    margin-top:20px;
-  }
-  footer .academy{
-    color:var(--green);
-    font-weight:700;
-    margin-bottom:4px;
-  }
-  footer a{
-    color:var(--gold);
-    text-decoration:none;
-    font-weight:600;
-  }
-  footer a:hover{
-    text-decoration:underline;
-  }
-  #liveStatus{
-    display:block;
-    margin-top:8px;
-    font-size:.78rem;
-  }
-  .corporate{
-    margin-top:12px;
-    font-size:.75rem;
-    color:var(--muted);
-  }
-</style>
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body>
-<header>
-  <div class="brand">
-    <img src="assets/logo.png" alt="Scope Ark logo">
-    <div class="name">SCOPE<span class="ark">ARK</span></div>
+<body class="m-0 min-h-screen bg-scopebg text-scopetext font-sans">
+<header class="px-5 pt-8 pb-5 text-center">
+  <div class="flex flex-col items-center gap-1.5 mb-3.5">
+    <img src="assets/logo.png" alt="Scope Ark logo" class="w-18 h-18 object-contain">
+    <div class="text-2xl font-bold tracking-wide text-scopegreen">SCOPE<span class="text-scopegold">ARK</span></div>
   </div>
-  <h1>Teacher Lessons Schedule</h1>
+  <h1 class="m-0 text-3xl font-bold text-scopegreen">Teacher Lessons Schedule</h1>
 </header>
 
-<div class="container">
-  <div class="toolbar">
-    <select id="filterTeacher"><option value="">All Teachers</option></select>
+<div class="max-w-5xl mx-auto px-4 pb-10">
+  <div class="flex justify-center mb-4">
+    <select id="filterTeacher" class="w-full max-w-xs px-3 py-2.5 rounded-lg border border-scopeborder bg-scopecard text-scopetext text-sm">
+      <option value="">All Teachers</option>
+    </select>
   </div>
 
-  <div class="stats" id="stats"></div>
+  <div id="stats" class="flex gap-2.5 flex-wrap justify-center mb-4"></div>
 
-  <div class="cards" id="cards"></div>
-  <div class="empty" id="empty" style="display:none">No lessons found</div>
+  <div id="cards" class="grid gap-3.5" style="grid-template-columns:repeat(auto-fill, minmax(280px,1fr))"></div>
+  <div id="empty" class="text-center text-scopemuted py-10 hidden">No lessons found</div>
 </div>
 
-<footer>
-  <div class="academy">Scope Ark Online Academy</div>
-  <a href="https://www.scopeark.com" target="_blank" rel="noopener">www.scopeark.com</a>
-  <span id="liveStatus">Loading...</span>
-  <div class="corporate">Corporate website: scopeark.net. &copy; 2026 Scope Ark. All rights reserved.</div>
+<footer class="text-center text-scopemuted text-sm px-5 pt-6 pb-8 border-t border-scopeborder mt-5">
+  <div class="text-scopegreen font-bold mb-1">Scope Ark Online Academy</div>
+  <a href="https://www.scopeark.com" target="_blank" rel="noopener" class="text-scopegold font-semibold hover:underline">www.scopeark.com</a>
+  <span id="liveStatus" class="block mt-2 text-xs">Loading...</span>
+  <div class="mt-3 text-xs text-scopemuted">Corporate website: scopeark.net. &copy; 2026 Scope Ark. All rights reserved.</div>
 </footer>
 
 <script>
@@ -334,14 +161,13 @@ function dayNameFromDate(dateStr){
   return dt.toLocaleDateString('en-US', {weekday: 'long', timeZone: 'UTC'});
 }
 
-function badgeClass(status){
-  if(!status) return 'default';
-  const s = status.toLowerCase();
-  if(s === 'scheduled') return 'scheduled';
-  if(s === 'trail') return 'trail';
-  if(s === 'trail_done') return 'trail_done';
-  if(s === 'rescheduled') return 'rescheduled';
-  return 'default';
+function badgeClasses(status){
+  const s = (status || '').toLowerCase();
+  if(s === 'scheduled') return 'bg-scopegreen/10 text-scopegreen';
+  if(s === 'trail') return 'bg-scopegold/20 text-scopegold';
+  if(s === 'trail_done') return 'bg-scopegood/15 text-scopegood';
+  if(s === 'rescheduled') return 'bg-scopebad/15 text-scopebad';
+  return 'bg-scopemuted/10 text-scopemuted';
 }
 
 const VISIBLE_STATUSES = ['scheduled', 'trail', 'rescheduled'];
@@ -367,6 +193,14 @@ function populateTeacherFilter(){
   if(teachers.includes(prev)) sel.value = prev;
 }
 
+function row(icon, label, value){
+  return `
+    <div class="flex justify-between items-start text-sm text-scopemuted gap-2">
+      <span class="flex items-center gap-1.5 shrink-0"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i>${label}</span>
+      <span class="text-scopetext font-medium text-right">${value}</span>
+    </div>`;
+}
+
 function render(){
   const teacherFilter = document.getElementById('filterTeacher').value;
 
@@ -380,31 +214,39 @@ function render(){
   cards.innerHTML = '';
 
   if(sorted.length === 0){
-    empty.style.display = 'block';
+    empty.classList.remove('hidden');
   } else {
-    empty.style.display = 'none';
+    empty.classList.add('hidden');
     sorted.forEach(l=>{
       const card = document.createElement('div');
-      card.className = 'card';
+      card.className = 'bg-scopecard border border-scopeborder rounded-2xl p-4 flex flex-col gap-2 shadow-sm';
+      const day = `${l.Teacher_Date || '-'}${dayNameFromDate(l.Teacher_Date) ? ' (' + dayNameFromDate(l.Teacher_Date) + ')' : ''}`;
+      const time = `${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})`;
       card.innerHTML = `
-        <div class="teacher-name">${l.Teacher_Name || '-'}</div>
-        <div class="top">
-          <span class="subject">${l.Subject || '-'}</span>
-          <span class="badge ${badgeClass(l.Status)}">${statusLabel(l.Status)}</span>
+        <div class="flex items-center gap-2 text-lg font-bold text-scopegreen border-b border-scopeborder pb-2">
+          <i data-lucide="user" class="w-4 h-4"></i>${l.Teacher_Name || '-'}
         </div>
-        <div class="row"><span>Student</span><span>${l.Student_Name || '-'}</span></div>
-        <div class="row"><span>Day</span><span>${l.Teacher_Date || '-'}${dayNameFromDate(l.Teacher_Date) ? ' (' + dayNameFromDate(l.Teacher_Date) + ')' : ''}</span></div>
-        <div class="row"><span>Time (Teacher)</span><span>${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})</span></div>
-        <div class="row"><span>Admin Time</span><span>${l.CAIRO_TIME || '-'}</span></div>
-        ${l.MEET_LINK ? `<a class="meet" href="https://${l.MEET_LINK}" target="_blank" rel="noopener">Join Lesson</a>` : ''}
+        <div class="flex justify-between items-center">
+          <span class="flex items-center gap-1.5 font-semibold text-sm text-scopegold"><i data-lucide="book-open" class="w-3.5 h-3.5"></i>${l.Subject || '-'}</span>
+          <span class="text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ${badgeClasses(l.Status)}">${statusLabel(l.Status)}</span>
+        </div>
+        ${row('graduation-cap', 'Student', l.Student_Name || '-')}
+        ${row('calendar', 'Day', day)}
+        ${row('clock', 'Time (Teacher)', time)}
+        ${row('building-2', 'Admin Time', l.CAIRO_TIME || '-')}
+        ${l.MEET_LINK ? `<a class="mt-1.5 flex items-center justify-center gap-1.5 text-center py-2 rounded-lg bg-scopegreen text-white no-underline text-sm font-semibold hover:opacity-90" href="https://${l.MEET_LINK}" target="_blank" rel="noopener"><i data-lucide="video" class="w-4 h-4"></i>Join Lesson</a>` : ''}
       `;
       cards.appendChild(card);
     });
   }
 
   document.getElementById('stats').innerHTML = `
-    <div class="stat"><b>${sorted.length}</b>Lessons Shown</div>
+    <div class="bg-scopecard border border-scopeborder rounded-xl px-4 py-2.5 text-sm text-scopemuted text-center">
+      <b class="block text-scopegreen text-lg">${sorted.length}</b>Lessons Shown
+    </div>
   `;
+
+  if(window.lucide) lucide.createIcons();
 }
 
 document.getElementById('filterTeacher').addEventListener('change', render);
