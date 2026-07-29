@@ -309,6 +309,18 @@ async function loadData(isRefresh){
 
 setInterval(()=>loadData(true), REFRESH_MS);
 
+function dayNameFromDate(dateStr){
+  if(!dateStr) return '';
+  let y, m, d;
+  const iso = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  const us = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(iso){ y = +iso[1]; m = +iso[2]; d = +iso[3]; }
+  else if(us){ m = +us[1]; d = +us[2]; y = +us[3]; }
+  else return '';
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.toLocaleDateString('en-US', {weekday: 'long', timeZone: 'UTC'});
+}
+
 function badgeClass(status){
   if(!status) return 'default';
   const s = status.toLowerCase();
@@ -368,7 +380,7 @@ function render(){
         </div>
         <div class="row"><span>Teacher</span><span>${l.Teacher_Name || '-'}</span></div>
         <div class="row"><span>Student</span><span>${l.Student_Name || '-'}</span></div>
-        <div class="row"><span>Day</span><span>${l.Teacher_Date || '-'}</span></div>
+        <div class="row"><span>Day</span><span>${l.Teacher_Date || '-'}${dayNameFromDate(l.Teacher_Date) ? ' (' + dayNameFromDate(l.Teacher_Date) + ')' : ''}</span></div>
         <div class="row"><span>Time (Teacher)</span><span>${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})</span></div>
         <div class="row"><span>Admin Time</span><span>${l.CAIRO_TIME || '-'}</span></div>
         ${l.MEET_LINK ? `<a class="meet" href="https://${l.MEET_LINK}" target="_blank" rel="noopener">Join Lesson</a>` : ''}
