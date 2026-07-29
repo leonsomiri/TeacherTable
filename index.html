@@ -116,10 +116,17 @@
     justify-content:space-between;
     align-items:center;
   }
-  .subject{
+  .teacher-name{
     font-weight:700;
-    font-size:1.05rem;
+    font-size:1.15rem;
     color:var(--green);
+    border-bottom:1px solid var(--border);
+    padding-bottom:8px;
+  }
+  .subject{
+    font-weight:600;
+    font-size:.95rem;
+    color:var(--gold);
   }
   .badge{
     font-size:.75rem;
@@ -380,11 +387,11 @@ function render(){
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
+        <div class="teacher-name">${l.Teacher_Name || '-'}</div>
         <div class="top">
           <span class="subject">${l.Subject || '-'}</span>
           <span class="badge ${badgeClass(l.Status)}">${statusLabel(l.Status)}</span>
         </div>
-        <div class="row"><span>Teacher</span><span>${l.Teacher_Name || '-'}</span></div>
         <div class="row"><span>Student</span><span>${l.Student_Name || '-'}</span></div>
         <div class="row"><span>Day</span><span>${l.Teacher_Date || '-'}${dayNameFromDate(l.Teacher_Date) ? ' (' + dayNameFromDate(l.Teacher_Date) + ')' : ''}</span></div>
         <div class="row"><span>Time (Teacher)</span><span>${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})</span></div>
