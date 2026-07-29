@@ -319,7 +319,13 @@ function badgeClass(status){
   return 'default';
 }
 
-const VISIBLE_STATUSES = ['scheduled', 'trail'];
+const VISIBLE_STATUSES = ['scheduled', 'trail', 'rescheduled'];
+
+function statusLabel(status){
+  if(!status) return '-';
+  if(status.toLowerCase() === 'trail') return 'Trial';
+  return status;
+}
 
 function populateTeacherFilter(){
   const sel = document.getElementById('filterTeacher');
@@ -358,7 +364,7 @@ function render(){
       card.innerHTML = `
         <div class="top">
           <span class="subject">${l.Subject || '-'}</span>
-          <span class="badge ${badgeClass(l.Status)}">${l.Status || '-'}</span>
+          <span class="badge ${badgeClass(l.Status)}">${statusLabel(l.Status)}</span>
         </div>
         <div class="row"><span>Teacher</span><span>${l.Teacher_Name || '-'}</span></div>
         <div class="row"><span>Student</span><span>${l.Student_Name || '-'}</span></div>
