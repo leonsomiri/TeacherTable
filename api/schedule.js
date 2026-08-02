@@ -2,7 +2,6 @@ const { OAuth2Client } = require('google-auth-library');
 const { google } = require('googleapis');
 
 const SPREADSHEET_ID = '1Fl6N0krFeQ-tB1OGOVMKG73FumWsqXCfdOwILFsbF1Y';
-const VISIBLE_STATUSES = ['scheduled', 'trail', 'rescheduled'];
 
 const oauthClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -86,7 +85,6 @@ module.exports = async (req, res) => {
 
     const filtered = lessons
       .filter(l => l.Lesson_ID)
-      .filter(l => VISIBLE_STATUSES.includes((l.Status || '').toLowerCase()))
       .filter(l => isAdmin || l.Teacher_ID === teacherId)
       .map(l => ({
         Lesson_ID: l.Lesson_ID,

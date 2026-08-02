@@ -39,6 +39,16 @@
 
   <div id="cards" class="grid gap-3.5" style="grid-template-columns:repeat(auto-fill, minmax(280px,1fr))"></div>
   <div id="empty" class="text-center text-slate-500 py-10 hidden">No lessons found</div>
+
+  <div id="finishedSection" class="hidden">
+    <div class="flex items-center gap-3 my-7">
+      <div class="flex-1 h-px bg-slate-200"></div>
+      <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Finished</span>
+      <div class="flex-1 h-px bg-slate-200"></div>
+    </div>
+    <h2 class="text-lg font-bold text-slate-700 mb-3.5 text-center">Completed Lessons</h2>
+    <div id="finishedCards" class="grid gap-3.5" style="grid-template-columns:repeat(auto-fill, minmax(280px,1fr))"></div>
+  </div>
 </div>
 
 <footer class="text-center text-slate-500 text-sm px-5 pt-6 pb-8 border-t border-slate-200 mt-5">
@@ -195,6 +205,17 @@ function statusLabel(status){
   return status;
 }
 
+function headerGradient(status){
+  const s = (status || '').toLowerCase();
+  if(s === 'scheduled') return 'from-indigo-600 to-indigo-800';
+  if(s === 'trail') return 'from-amber-500 to-amber-700';
+  if(s === 'trail_done') return 'from-emerald-500 to-emerald-700';
+  if(s === 'rescheduled') return 'from-rose-500 to-rose-700';
+  return 'from-slate-500 to-slate-700';
+}
+
+const FINISHED_HEADER_GRADIENT = 'from-slate-500 to-slate-700';
+
 function populateTeacherFilter(){
   const sel = document.getElementById('filterTeacher');
   const prev = sel.value;
@@ -216,48 +237,58 @@ function row(icon, label, value){
     </div>`;
 }
 
+function buildCard(l, gradient){
+  const card = document.createElement('div');
+  card.className = 'bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-2 shadow-sm';
+  const day = `${l.Teacher_Date || '-'}${dayNameFromDate(l.Teacher_Date) ? ' (' + dayNameFromDate(l.Teacher_Date) + ')' : ''}`;
+  const time = `${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})`;
+  card.innerHTML = `
+    <div class="flex items-center gap-2 -mx-4 -mt-4 mb-1 px-4 py-2.5 rounded-t-2xl text-white font-bold text-lg bg-gradient-to-b ${gradient} shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2)]">
+      <i data-lucide="user" class="w-4 h-4"></i>${l.Teacher_Name || '-'}
+    </div>
+    <div class="flex justify-between items-center">
+      <span class="flex items-center gap-1.5 font-semibold text-sm text-indigo-600"><i data-lucide="book-open" class="w-3.5 h-3.5"></i>${l.Subject || '-'}</span>
+      <span class="text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ${badgeClasses(l.Status)}">${statusLabel(l.Status)}</span>
+    </div>
+    ${row('graduation-cap', 'Student', l.Student_Name || '-')}
+    ${row('calendar', 'Day', day)}
+    ${row('clock', 'Time (Teacher)', time)}
+    ${row('building-2', 'Admin Time', l.CAIRO_TIME || '-')}
+    ${l.MEET_LINK ? `<a class="mt-1.5 flex items-center justify-center gap-1.5 text-center py-2 rounded-lg bg-slate-900 text-white no-underline text-sm font-semibold hover:opacity-90" href="https://${l.MEET_LINK}" target="_blank" rel="noopener"><i data-lucide="video" class="w-4 h-4"></i>Join Lesson</a>` : ''}
+  `;
+  return card;
+}
+
 function render(){
   const teacherFilter = document.getElementById('filterTeacher').value;
 
-  const sorted = allLessons
+  const filtered = allLessons.filter(l=>!isAdmin || !teacherFilter || l.Teacher_Name === teacherFilter);
+  const byTime = (a,b)=>adminTimeSortKey(a.CAIRO_TIME) - adminTimeSortKey(b.CAIRO_TIME);
+
+  const current = filtered
     .filter(l=>VISIBLE_STATUSES.includes((l.Status||'').toLowerCase()))
-    .filter(l=>!isAdmin || !teacherFilter || l.Teacher_Name === teacherFilter)
-    .sort((a,b)=>adminTimeSortKey(a.CAIRO_TIME) - adminTimeSortKey(b.CAIRO_TIME));
+    .sort(byTime);
+  const finished = filtered
+    .filter(l=>!VISIBLE_STATUSES.includes((l.Status||'').toLowerCase()))
+    .sort(byTime);
 
   const cards = document.getElementById('cards');
   const empty = document.getElementById('empty');
+  const finishedSection = document.getElementById('finishedSection');
+  const finishedCards = document.getElementById('finishedCards');
   cards.innerHTML = '';
+  finishedCards.innerHTML = '';
 
-  if(sorted.length === 0){
-    empty.classList.remove('hidden');
-  } else {
-    empty.classList.add('hidden');
-    sorted.forEach(l=>{
-      const card = document.createElement('div');
-      card.className = 'bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-2 shadow-sm';
-      const day = `${l.Teacher_Date || '-'}${dayNameFromDate(l.Teacher_Date) ? ' (' + dayNameFromDate(l.Teacher_Date) + ')' : ''}`;
-      const time = `${l.Start_Time_Teacher || '-'} - ${l.End_Time_Teacher || '-'} (${l.Teacher_TimeZone || '-'})`;
-      card.innerHTML = `
-        <div class="flex items-center gap-2 -mx-4 -mt-4 mb-1 px-4 py-2.5 rounded-t-2xl text-white font-bold text-lg bg-gradient-to-b from-indigo-600 to-indigo-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2)]">
-          <i data-lucide="user" class="w-4 h-4"></i>${l.Teacher_Name || '-'}
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="flex items-center gap-1.5 font-semibold text-sm text-indigo-600"><i data-lucide="book-open" class="w-3.5 h-3.5"></i>${l.Subject || '-'}</span>
-          <span class="text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ${badgeClasses(l.Status)}">${statusLabel(l.Status)}</span>
-        </div>
-        ${row('graduation-cap', 'Student', l.Student_Name || '-')}
-        ${row('calendar', 'Day', day)}
-        ${row('clock', 'Time (Teacher)', time)}
-        ${row('building-2', 'Admin Time', l.CAIRO_TIME || '-')}
-        ${l.MEET_LINK ? `<a class="mt-1.5 flex items-center justify-center gap-1.5 text-center py-2 rounded-lg bg-slate-900 text-white no-underline text-sm font-semibold hover:opacity-90" href="https://${l.MEET_LINK}" target="_blank" rel="noopener"><i data-lucide="video" class="w-4 h-4"></i>Join Lesson</a>` : ''}
-      `;
-      cards.appendChild(card);
-    });
-  }
+  empty.classList.toggle('hidden', current.length !== 0 || finished.length !== 0);
+  current.forEach(l=>cards.appendChild(buildCard(l, headerGradient(l.Status))));
 
+  finishedSection.classList.toggle('hidden', finished.length === 0);
+  finished.forEach(l=>finishedCards.appendChild(buildCard(l, FINISHED_HEADER_GRADIENT)));
+
+  const total = current.length + finished.length;
   document.getElementById('stats').innerHTML = `
     <div class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-500 text-center">
-      <b class="block text-slate-900 text-lg">${sorted.length}</b>Lessons Shown
+      <b class="block text-slate-900 text-lg">${total}</b>Lessons Shown
     </div>
   `;
 
