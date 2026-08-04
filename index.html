@@ -66,6 +66,7 @@ const VISIBLE_STATUSES = ['scheduled', 'trail', 'rescheduled'];
 let idToken = null;
 let allLessons = [];
 let isAdmin = false;
+let refreshTimer = null;
 
 function setLiveStatus(msg){
   document.getElementById('liveStatus').textContent = msg;
@@ -81,8 +82,41 @@ function hideAuthError(){
   document.getElementById('authError').classList.add('hidden');
 }
 
+function decodeJwtExp(token){
+  try{
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload.exp ? payload.exp * 1000 : null;
+  } catch(e){
+    return null;
+  }
+}
+
+function storeToken(token){
+  idToken = token;
+  try{ sessionStorage.setItem('idToken', token); } catch(e){}
+  scheduleTokenRefresh();
+}
+
+function clearToken(){
+  idToken = null;
+  try{ sessionStorage.removeItem('idToken'); } catch(e){}
+  if(refreshTimer){ clearTimeout(refreshTimer); refreshTimer = null; }
+}
+
+function attemptSilentRefresh(){
+  if(window.google && google.accounts && google.accounts.id) google.accounts.id.prompt();
+}
+
+function scheduleTokenRefresh(){
+  if(refreshTimer){ clearTimeout(refreshTimer); refreshTimer = null; }
+  const exp = decodeJwtExp(idToken);
+  if(!exp) return;
+  const msUntilRefresh = exp - Date.now() - (5 * 60 * 1000);
+  refreshTimer = setTimeout(attemptSilentRefresh, Math.max(msUntilRefresh, 0));
+}
+
 function onCredentialResponse(response){
-  idToken = response.credential;
+  storeToken(response.credential);
   hideAuthError();
   document.getElementById('authGate').classList.add('hidden');
   document.getElementById('appContent').classList.remove('hidden');
@@ -90,7 +124,7 @@ function onCredentialResponse(response){
 }
 
 function signOut(){
-  idToken = null;
+  clearToken();
   allLessons = [];
   if(window.google) google.accounts.id.disableAutoSelect();
   document.getElementById('appContent').classList.add('hidden');
@@ -99,15 +133,33 @@ function signOut(){
 
 document.getElementById('signOutBtn').addEventListener('click', signOut);
 
+function tryRestoreSession(){
+  let stored = null;
+  try{ stored = sessionStorage.getItem('idToken'); } catch(e){}
+  if(!stored) return;
+  const exp = decodeJwtExp(stored);
+  if(!exp || exp <= Date.now()){
+    try{ sessionStorage.removeItem('idToken'); } catch(e){}
+    return;
+  }
+  idToken = stored;
+  scheduleTokenRefresh();
+  document.getElementById('authGate').classList.add('hidden');
+  document.getElementById('appContent').classList.remove('hidden');
+  loadData();
+}
+
 function initGoogleSignIn(attemptsLeft){
   if(window.google && google.accounts && google.accounts.id){
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: onCredentialResponse,
+      auto_select: true,
     });
     google.accounts.id.renderButton(document.getElementById('googleSignInBtn'), {
       theme: 'outline', size: 'large', text: 'signin_with',
     });
+    tryRestoreSession();
     return;
   }
   if(attemptsLeft <= 0){
