@@ -354,14 +354,16 @@ function render(){
   const teacherFilter = document.getElementById('filterTeacher').value;
 
   const filtered = allLessons.filter(l=>!isAdmin || !teacherFilter || l.Teacher_Name === teacherFilter);
-  const byTime = (a,b)=>adminTimeSortKey(a.CAIRO_TIME) - adminTimeSortKey(b.CAIRO_TIME);
+  const byTimeAsc = (a,b)=>adminTimeSortKey(a.CAIRO_TIME) - adminTimeSortKey(b.CAIRO_TIME);
+  const teacherTimeKey = l=>adminTimeSortKey(`${l.Teacher_Date || ''} ${l.Start_Time_Teacher || ''}`);
+  const byTimeDesc = (a,b)=>teacherTimeKey(b) - teacherTimeKey(a);
 
   const current = filtered
     .filter(l=>VISIBLE_STATUSES.includes((l.Status||'').toLowerCase()))
-    .sort(byTime);
+    .sort(byTimeAsc);
   const finished = filtered
     .filter(l=>!VISIBLE_STATUSES.includes((l.Status||'').toLowerCase()))
-    .sort(byTime);
+    .sort(byTimeDesc);
 
   const cards = document.getElementById('cards');
   const empty = document.getElementById('empty');
