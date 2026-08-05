@@ -303,6 +303,8 @@ function buildFixedCard(item){
     </div>
     <div class="flex items-center gap-1.5 font-semibold text-sm text-emerald-700"><i data-lucide="book-open" class="w-3.5 h-3.5"></i>${item.Subject || '-'}</div>
     ${row('graduation-cap', 'Student', item.Student_Name || '-')}
+    ${row('globe', 'Country', item.Student_Country || '-')}
+    ${row('layers', 'Grade', item.Student_Grade || '-')}
     ${row('calendar', 'Day', item.Day_Teacher || '-')}
     ${row('clock', 'Time (Teacher)', time)}
   `;
@@ -350,6 +352,8 @@ function buildCard(l, gradient){
       <span class="text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ${badgeClasses(l.Status)}">${statusLabel(l.Status)}</span>
     </div>
     ${row('graduation-cap', 'Student', l.Student_Name || '-')}
+    ${row('globe', 'Country', l.Student_Country || '-')}
+    ${row('layers', 'Grade', l.Student_Grade || '-')}
     ${row('calendar', 'Day', day)}
     ${row('clock', 'Time (Teacher)', time)}
     ${row('building-2', 'Admin Time', l.CAIRO_TIME || '-')}
