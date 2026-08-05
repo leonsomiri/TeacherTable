@@ -127,12 +127,13 @@ module.exports = async (req, res) => {
 
   try {
     const sheets = sheetsClient();
-    const [adminsRes, teachersRes, lessonsRes, availabilityRes, studentsRes] = await Promise.all([
+    const [adminsRes, teachersRes, lessonsRes, availabilityRes, studentsRes, completedRes] = await Promise.all([
       sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'ADMINS!A:C' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Teachers!A:L' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Lessons_Schedule!A:AE' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Student_Availability!A:I' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Students!A:AC' }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'completed!A:AI' }),
     ]);
 
     const admins = rowsToObjects(adminsRes.data.values);
@@ -140,6 +141,7 @@ module.exports = async (req, res) => {
     const lessons = rowsToObjects(lessonsRes.data.values);
     const availability = rowsToObjects(availabilityRes.data.values);
     const students = rowsToObjects(studentsRes.data.values);
+    const completedLessons = rowsToObjects(completedRes.data.values);
 
     const admin = admins.find(a => (a.Admin_Eamil || '').toLowerCase().trim() === email);
     const isAdmin = Boolean(admin);
@@ -156,23 +158,25 @@ module.exports = async (req, res) => {
       viewerName = teacher.Teacher_Name;
     }
 
-    const filtered = lessons
+    const mapLessonRow = l => ({
+      Lesson_ID: l.Lesson_ID,
+      Teacher_ID: l.Teacher_ID,
+      Teacher_Name: l.Teacher_Name,
+      Student_Name: l.Student_Name,
+      Subject: l.Subject,
+      Teacher_Date: l.Teacher_Date,
+      Start_Time_Teacher: l.Start_Time_Teacher,
+      End_Time_Teacher: l.End_Time_Teacher,
+      Teacher_TimeZone: l.Teacher_TimeZone,
+      CAIRO_TIME: l.CAIRO_TIME,
+      MEET_LINK: l.MEET_LINK,
+      Status: l.Status,
+    });
+
+    const filtered = [...lessons, ...completedLessons]
       .filter(l => l.Lesson_ID)
       .filter(l => isAdmin || l.Teacher_ID === teacherId)
-      .map(l => ({
-        Lesson_ID: l.Lesson_ID,
-        Teacher_ID: l.Teacher_ID,
-        Teacher_Name: l.Teacher_Name,
-        Student_Name: l.Student_Name,
-        Subject: l.Subject,
-        Teacher_Date: l.Teacher_Date,
-        Start_Time_Teacher: l.Start_Time_Teacher,
-        End_Time_Teacher: l.End_Time_Teacher,
-        Teacher_TimeZone: l.Teacher_TimeZone,
-        CAIRO_TIME: l.CAIRO_TIME,
-        MEET_LINK: l.MEET_LINK,
-        Status: l.Status,
-      }));
+      .map(mapLessonRow);
 
     const studentsById = new Map(students.map(s => [s.Student_ID, s]));
     const teachersById = new Map(teachers.map(t => [t.Teacher_ID, t]));
