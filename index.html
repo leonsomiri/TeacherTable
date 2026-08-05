@@ -49,6 +49,12 @@
     <h2 class="text-lg font-bold text-slate-700 mb-3.5 text-center">Completed Lessons</h2>
     <div id="finishedCards" class="grid gap-3.5" style="grid-template-columns:repeat(auto-fill, minmax(280px,1fr))"></div>
   </div>
+
+  <div id="fixedScheduleSection" class="hidden">
+    <div class="h-px bg-slate-200 my-7"></div>
+    <h2 class="text-lg font-bold text-slate-700 mb-3.5 text-center">Fixed Schedule</h2>
+    <div id="fixedScheduleCards" class="grid gap-3.5" style="grid-template-columns:repeat(auto-fill, minmax(280px,1fr))"></div>
+  </div>
 </div>
 
 <footer class="text-center text-slate-500 text-sm px-5 pt-6 pb-8 border-t border-slate-200 mt-5">
@@ -65,6 +71,7 @@ const VISIBLE_STATUSES = ['scheduled', 'trail', 'rescheduled'];
 
 let idToken = null;
 let allLessons = [];
+let allFixedSchedule = [];
 let isAdmin = false;
 let refreshTimer = null;
 
@@ -195,6 +202,7 @@ async function loadData(isRefresh){
 
     const data = await res.json();
     allLessons = data.lessons || [];
+    allFixedSchedule = data.fixedSchedule || [];
     isAdmin = Boolean(data.isAdmin);
 
     document.getElementById('teacherFilterWrap').classList.toggle('hidden', !isAdmin);
@@ -268,6 +276,37 @@ function headerGradient(status){
 
 const FINISHED_HEADER_GRADIENT = 'from-slate-500 to-slate-700';
 
+const WEEKDAY_ORDER = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function timeStringToMinutes(str){
+  const m = (str || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if(!m) return 0;
+  let h = (+m[1]) % 12;
+  if(/pm/i.test(m[3])) h += 12;
+  return h * 60 + (+m[2]);
+}
+
+function fixedScheduleSortKey(item){
+  const dayIndex = WEEKDAY_ORDER.indexOf(item.Day_Teacher);
+  return (dayIndex === -1 ? 7 : dayIndex) * 10000 + timeStringToMinutes(item.Start_Time_Teacher);
+}
+
+function buildFixedCard(item){
+  const card = document.createElement('div');
+  card.className = 'bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-2 shadow-sm';
+  const time = `${item.Start_Time_Teacher || '-'} - ${item.End_Time_Teacher || '-'} (${item.Teacher_TimeZone || '-'})`;
+  card.innerHTML = `
+    <div class="flex items-center gap-2 -mx-4 -mt-4 mb-1 px-4 py-2.5 rounded-t-2xl text-white font-bold text-lg bg-gradient-to-b ${FINISHED_HEADER_GRADIENT} shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2)]">
+      <i data-lucide="user" class="w-4 h-4"></i>${item.Teacher_Name || '-'}
+    </div>
+    <div class="flex items-center gap-1.5 font-semibold text-sm text-indigo-600"><i data-lucide="book-open" class="w-3.5 h-3.5"></i>${item.Subject || '-'}</div>
+    ${row('graduation-cap', 'Student', item.Student_Name || '-')}
+    ${row('calendar', 'Day', item.Day_Teacher || '-')}
+    ${row('clock', 'Time (Teacher)', time)}
+  `;
+  return card;
+}
+
 function populateTeacherFilter(){
   const sel = document.getElementById('filterTeacher');
   const prev = sel.value;
@@ -336,6 +375,15 @@ function render(){
 
   finishedSection.classList.toggle('hidden', finished.length === 0);
   finished.forEach(l=>finishedCards.appendChild(buildCard(l, FINISHED_HEADER_GRADIENT)));
+
+  const fixedFiltered = allFixedSchedule
+    .filter(f=>!isAdmin || !teacherFilter || f.Teacher_Name === teacherFilter)
+    .sort((a,b)=>fixedScheduleSortKey(a) - fixedScheduleSortKey(b));
+  const fixedScheduleSection = document.getElementById('fixedScheduleSection');
+  const fixedScheduleCards = document.getElementById('fixedScheduleCards');
+  fixedScheduleCards.innerHTML = '';
+  fixedScheduleSection.classList.toggle('hidden', fixedFiltered.length === 0);
+  fixedFiltered.forEach(f=>fixedScheduleCards.appendChild(buildFixedCard(f)));
 
   const total = current.length + finished.length;
   document.getElementById('stats').innerHTML = `
