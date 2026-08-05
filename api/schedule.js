@@ -158,28 +158,33 @@ module.exports = async (req, res) => {
       viewerName = teacher.Teacher_Name;
     }
 
-    const mapLessonRow = l => ({
-      Lesson_ID: l.Lesson_ID,
-      Teacher_ID: l.Teacher_ID,
-      Teacher_Name: l.Teacher_Name,
-      Student_Name: l.Student_Name,
-      Subject: l.Subject,
-      Teacher_Date: l.Teacher_Date,
-      Start_Time_Teacher: l.Start_Time_Teacher,
-      End_Time_Teacher: l.End_Time_Teacher,
-      Teacher_TimeZone: l.Teacher_TimeZone,
-      CAIRO_TIME: l.CAIRO_TIME,
-      MEET_LINK: l.MEET_LINK,
-      Status: l.Status,
-    });
+    const studentsById = new Map(students.map(s => [s.Student_ID, s]));
+    const teachersById = new Map(teachers.map(t => [t.Teacher_ID, t]));
+
+    const mapLessonRow = l => {
+      const studentRow = studentsById.get(l.Student_ID);
+      return {
+        Lesson_ID: l.Lesson_ID,
+        Teacher_ID: l.Teacher_ID,
+        Teacher_Name: l.Teacher_Name,
+        Student_Name: l.Student_Name,
+        Student_Country: (studentRow && studentRow.Country) || '',
+        Student_Grade: (studentRow && studentRow.Stage) || '',
+        Subject: l.Subject,
+        Teacher_Date: l.Teacher_Date,
+        Start_Time_Teacher: l.Start_Time_Teacher,
+        End_Time_Teacher: l.End_Time_Teacher,
+        Teacher_TimeZone: l.Teacher_TimeZone,
+        CAIRO_TIME: l.CAIRO_TIME,
+        MEET_LINK: l.MEET_LINK,
+        Status: l.Status,
+      };
+    };
 
     const filtered = [...lessons, ...completedLessons]
       .filter(l => l.Lesson_ID)
       .filter(l => isAdmin || l.Teacher_ID === teacherId)
       .map(mapLessonRow);
-
-    const studentsById = new Map(students.map(s => [s.Student_ID, s]));
-    const teachersById = new Map(teachers.map(t => [t.Teacher_ID, t]));
 
     const fixedSchedule = availability
       .filter(a => a.Student_ID && a.Pref_Teacher)
@@ -194,6 +199,8 @@ module.exports = async (req, res) => {
         if (!converted) return null;
         return {
           Student_Name: (studentRow && studentRow.Student_Name) || a.Student_Name,
+          Student_Country: (studentRow && studentRow.Country) || '',
+          Student_Grade: (studentRow && studentRow.Stage) || '',
           Subject: a.Subject,
           Teacher_ID: a.Pref_Teacher,
           Teacher_Name: (teacherRow && teacherRow.Teacher_Name) || a['Teacher Name'] || '',
