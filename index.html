@@ -35,7 +35,7 @@
     </select>
   </div>
 
-  <div id="stats" class="flex gap-2.5 flex-wrap justify-center mb-4"></div>
+  <div id="stats" class="mb-4"></div>
 
   <div id="cards" class="grid gap-3.5" style="grid-template-columns:repeat(auto-fill, minmax(280px,1fr))"></div>
   <div id="empty" class="text-center text-slate-500 py-10 hidden">No lessons found</div>
@@ -399,10 +399,21 @@ function render(){
   fixedScheduleSection.classList.toggle('hidden', fixedFiltered.length === 0);
   fixedFiltered.forEach(f=>fixedScheduleCards.appendChild(buildFixedCard(f)));
 
-  const total = current.length + finished.length;
+  const total = current.length + finished.length + fixedFiltered.length;
   document.getElementById('stats').innerHTML = `
-    <div class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-500 text-center">
-      <b class="block text-slate-900 text-lg">${total}</b>Lessons Shown
+    <div class="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-4">
+      <div class="text-sm font-semibold text-slate-500 text-center mb-3">Lessons Shown (${total})</div>
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fit, minmax(140px,1fr))">
+        <div class="bg-indigo-100 text-indigo-700 rounded-xl px-3 py-2.5 text-center text-sm font-semibold">
+          <b class="block text-lg">${current.length}</b>Current
+        </div>
+        <div class="bg-slate-100 text-slate-700 rounded-xl px-3 py-2.5 text-center text-sm font-semibold">
+          <b class="block text-lg">${finished.length}</b>Completed
+        </div>
+        <div class="bg-emerald-100 text-emerald-700 rounded-xl px-3 py-2.5 text-center text-sm font-semibold">
+          <b class="block text-lg">${fixedFiltered.length}</b>Fixed Schedule
+        </div>
+      </div>
     </div>
   `;
 
