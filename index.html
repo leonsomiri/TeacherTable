@@ -291,15 +291,17 @@ function fixedScheduleSortKey(item){
   return (dayIndex === -1 ? 7 : dayIndex) * 10000 + timeStringToMinutes(item.Start_Time_Teacher);
 }
 
+const FIXED_SCHEDULE_HEADER_GRADIENT = 'from-teal-600 to-emerald-800';
+
 function buildFixedCard(item){
   const card = document.createElement('div');
-  card.className = 'bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-2 shadow-sm';
+  card.className = 'bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col gap-2 shadow-sm';
   const time = `${item.Start_Time_Teacher || '-'} - ${item.End_Time_Teacher || '-'} (${item.Teacher_TimeZone || '-'})`;
   card.innerHTML = `
-    <div class="flex items-center gap-2 -mx-4 -mt-4 mb-1 px-4 py-2.5 rounded-t-2xl text-white font-bold text-lg bg-gradient-to-b ${FINISHED_HEADER_GRADIENT} shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2)]">
+    <div class="flex items-center gap-2 -mx-4 -mt-4 mb-1 px-4 py-2.5 rounded-t-2xl text-white font-bold text-lg bg-gradient-to-b ${FIXED_SCHEDULE_HEADER_GRADIENT} shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2)]">
       <i data-lucide="user" class="w-4 h-4"></i>${item.Teacher_Name || '-'}
     </div>
-    <div class="flex items-center gap-1.5 font-semibold text-sm text-indigo-600"><i data-lucide="book-open" class="w-3.5 h-3.5"></i>${item.Subject || '-'}</div>
+    <div class="flex items-center gap-1.5 font-semibold text-sm text-emerald-700"><i data-lucide="book-open" class="w-3.5 h-3.5"></i>${item.Subject || '-'}</div>
     ${row('graduation-cap', 'Student', item.Student_Name || '-')}
     ${row('calendar', 'Day', item.Day_Teacher || '-')}
     ${row('clock', 'Time (Teacher)', time)}
