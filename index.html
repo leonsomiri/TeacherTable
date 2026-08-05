@@ -312,14 +312,20 @@ function buildFixedCard(item){
 function populateTeacherFilter(){
   const sel = document.getElementById('filterTeacher');
   const prev = sel.value;
-  const teachers = [...new Set(allLessons.map(l=>l.Teacher_Name).filter(Boolean))].sort();
+  const teachersById = new Map();
+  [...allLessons, ...allFixedSchedule].forEach(item=>{
+    if(item.Teacher_ID && item.Teacher_Name && !teachersById.has(item.Teacher_ID)){
+      teachersById.set(item.Teacher_ID, item.Teacher_Name);
+    }
+  });
+  const teachers = [...teachersById.entries()].sort((a,b)=>a[1].localeCompare(b[1]));
   sel.innerHTML = '<option value="">All Teachers</option>';
-  teachers.forEach(t=>{
+  teachers.forEach(([id, name])=>{
     const o = document.createElement('option');
-    o.value = t; o.textContent = t;
+    o.value = id; o.textContent = name;
     sel.appendChild(o);
   });
-  if(teachers.includes(prev)) sel.value = prev;
+  if(teachersById.has(prev)) sel.value = prev;
 }
 
 function row(icon, label, value){
@@ -355,7 +361,7 @@ function buildCard(l, gradient){
 function render(){
   const teacherFilter = document.getElementById('filterTeacher').value;
 
-  const filtered = allLessons.filter(l=>!isAdmin || !teacherFilter || l.Teacher_Name === teacherFilter);
+  const filtered = allLessons.filter(l=>!isAdmin || !teacherFilter || l.Teacher_ID === teacherFilter);
   const byTimeAsc = (a,b)=>adminTimeSortKey(a.CAIRO_TIME) - adminTimeSortKey(b.CAIRO_TIME);
   const teacherTimeKey = l=>adminTimeSortKey(`${l.Teacher_Date || ''} ${l.Start_Time_Teacher || ''}`);
   const byTimeDesc = (a,b)=>teacherTimeKey(b) - teacherTimeKey(a);
@@ -381,7 +387,7 @@ function render(){
   finished.forEach(l=>finishedCards.appendChild(buildCard(l, FINISHED_HEADER_GRADIENT)));
 
   const fixedFiltered = allFixedSchedule
-    .filter(f=>!isAdmin || !teacherFilter || f.Teacher_Name === teacherFilter)
+    .filter(f=>!isAdmin || !teacherFilter || f.Teacher_ID === teacherFilter)
     .sort((a,b)=>fixedScheduleSortKey(a) - fixedScheduleSortKey(b));
   const fixedScheduleSection = document.getElementById('fixedScheduleSection');
   const fixedScheduleCards = document.getElementById('fixedScheduleCards');
