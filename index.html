@@ -307,6 +307,7 @@ function buildFixedCard(item){
     ${row('layers', 'Grade', item.Student_Grade || '-')}
     ${row('calendar', 'Day', item.Day_Teacher || '-')}
     ${row('clock', 'Time (Teacher)', time)}
+    ${redRow('building-2', 'Admin Time', `${item.Admin_Day || '-'}, ${item.Admin_Time || '-'}`)}
   `;
   return card;
 }
@@ -335,6 +336,14 @@ function row(icon, label, value){
     <div class="flex justify-between items-start text-sm text-slate-500 gap-2">
       <span class="flex items-center gap-1.5 shrink-0"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i>${label}</span>
       <span class="text-slate-800 font-medium text-right">${value}</span>
+    </div>`;
+}
+
+function redRow(icon, label, value){
+  return `
+    <div class="flex justify-between items-start text-sm text-red-800 gap-2">
+      <span class="flex items-center gap-1.5 shrink-0 font-semibold"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i>${label}</span>
+      <span class="font-bold text-right">${value}</span>
     </div>`;
 }
 
