@@ -91,7 +91,11 @@ function convertFixedSlotToTeacherTime(dayName, startTimeStr, durationHours, stu
 
   const start = formatTimeInZone(startUtc, teacherTimeZone);
   const end = formatTimeInZone(endUtc, teacherTimeZone);
-  return { day: start.weekday, startTime: start.time, endTime: end.time };
+  const admin = formatTimeInZone(startUtc, 'Africa/Cairo');
+  return {
+    day: start.weekday, startTime: start.time, endTime: end.time,
+    adminDay: admin.weekday, adminTime: admin.time,
+  };
 }
 
 function lessonDurationHours(studentRow, subject) {
@@ -208,6 +212,8 @@ module.exports = async (req, res) => {
           Start_Time_Teacher: converted.startTime,
           End_Time_Teacher: converted.endTime,
           Teacher_TimeZone: teacherTimeZone || '',
+          Admin_Day: converted.adminDay,
+          Admin_Time: converted.adminTime,
         };
       })
       .filter(Boolean);
