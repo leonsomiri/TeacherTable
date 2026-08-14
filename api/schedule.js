@@ -193,6 +193,10 @@ module.exports = async (req, res) => {
     const fixedSchedule = availability
       .filter(a => a.Student_ID && a.Pref_Teacher)
       .filter(a => isAdmin || a.Pref_Teacher === teacherId)
+      .filter(a => {
+        const studentRow = studentsById.get(a.Student_ID);
+        return studentRow && (studentRow.Status || '').trim().toLowerCase() === 'active';
+      })
       .map(a => {
         const studentRow = studentsById.get(a.Student_ID);
         const teacherRow = teachersById.get(a.Pref_Teacher);
