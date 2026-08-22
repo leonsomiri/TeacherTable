@@ -198,27 +198,32 @@ module.exports = async (req, res) => {
         return studentRow && (studentRow.Status || '').trim().toLowerCase() === 'active';
       })
       .map(a => {
-        const studentRow = studentsById.get(a.Student_ID);
-        const teacherRow = teachersById.get(a.Pref_Teacher);
-        const studentTimeZone = studentRow && studentRow.Timezone;
-        const teacherTimeZone = teacherRow && teacherRow.Timezone;
-        const duration = lessonDurationHours(studentRow, a.Subject);
-        const converted = convertFixedSlotToTeacherTime(a.Day, a.Preferred_Hours, duration, studentTimeZone, teacherTimeZone);
-        if (!converted) return null;
-        return {
-          Student_Name: (studentRow && studentRow.Student_Name) || a.Student_Name,
-          Student_Country: (studentRow && studentRow.Country) || '',
-          Student_Grade: (studentRow && studentRow.Stage) || '',
-          Subject: a.Subject,
-          Teacher_ID: a.Pref_Teacher,
-          Teacher_Name: (teacherRow && teacherRow.Teacher_Name) || a['Teacher Name'] || '',
-          Day_Teacher: converted.day,
-          Start_Time_Teacher: converted.startTime,
-          End_Time_Teacher: converted.endTime,
-          Teacher_TimeZone: teacherTimeZone || '',
-          Admin_Day: converted.adminDay,
-          Admin_Time: converted.adminTime,
-        };
+        try {
+          const studentRow = studentsById.get(a.Student_ID);
+          const teacherRow = teachersById.get(a.Pref_Teacher);
+          const studentTimeZone = studentRow && (studentRow.Timezone || '').trim();
+          const teacherTimeZone = teacherRow && (teacherRow.Timezone || '').trim();
+          const duration = lessonDurationHours(studentRow, a.Subject);
+          const converted = convertFixedSlotToTeacherTime(a.Day, a.Preferred_Hours, duration, studentTimeZone, teacherTimeZone);
+          if (!converted) return null;
+          return {
+            Student_Name: (studentRow && studentRow.Student_Name) || a.Student_Name,
+            Student_Country: (studentRow && studentRow.Country) || '',
+            Student_Grade: (studentRow && studentRow.Stage) || '',
+            Subject: a.Subject,
+            Teacher_ID: a.Pref_Teacher,
+            Teacher_Name: (teacherRow && teacherRow.Teacher_Name) || a['Teacher Name'] || '',
+            Day_Teacher: converted.day,
+            Start_Time_Teacher: converted.startTime,
+            End_Time_Teacher: converted.endTime,
+            Teacher_TimeZone: teacherTimeZone || '',
+            Admin_Day: converted.adminDay,
+            Admin_Time: converted.adminTime,
+          };
+        } catch (err) {
+          console.error('Skipping fixed-schedule row due to bad data', a.Student_ID, a.Pref_Teacher, err.message);
+          return null;
+        }
       })
       .filter(Boolean);
 
